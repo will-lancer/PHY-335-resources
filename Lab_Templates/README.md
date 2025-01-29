@@ -58,3 +58,10 @@ For tables,
     Sheet, download is as a CSV (commma separated value)
     sheet, and then upload it to Claude Sonnet (I have
     found that this is better than ChatGPT for some reason).
+  * You will need to add a folder called "Figures" into
+    whatever editor you're using; this is to contain
+    your figures, and you will need to put the SBU logo
+    into it to make things load correctly, as the include
+    path assumes it's in a folder named "Figures". Having
+    a folder also just makes things cleaner and easier
+    for yourself.
