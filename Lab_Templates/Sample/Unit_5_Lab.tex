@@ -1,0 +1,1265 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[pdftex]{graphicx}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{william} 
+\usepackage{subcaption}
+\usepackage{circuitikz} % for circuits
+\usepackage{graphicx} % pictures
+\usepackage{wrapfig} % for wrapping pictures
+\usepackage{pgfplots} % graphs
+\usepackage[makeroom]{cancel} % for striking out math
+\usepackage{parskip} % consistent indentation
+\usepackage{lettrine}
+\usepackage{Zallman}
+
+% headers and footers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{Will Lancer and James Cross}
+\chead{}
+\rhead{PHY 335 Unit 5 Lab Report}
+\lfoot{}
+\cfoot{\thepage}
+\rfoot{}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\headheight}{14pt}
+
+\linespread{1.03} % give a little extra room
+\setlength{\parindent}{0.2in} % reduce paragraph indent a bit
+
+% This is the magic: controls the font of the <letter>
+\renewcommand{\LettrineFontHook}{\Zallmanfamily}
+
+% This controls the font of the <text> 
+\renewcommand{\LettrineTextFont}{\Huge\scshape}
+
+% Bipoles Specifications
+\ctikzset{bipoles/thickness=1.2, label distance=1mm, voltage shift = 1}
+
+\DeclareSIUnit{\belmilliwatt}{Bm}
+\DeclareSIUnit{\dBm}{\deci\belmilliwatt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Feedback from last labs: 
+% Procedures and data collection:
+	% Keep measuring the true values of components used.
+% Figures:
+	% Include axes and labels on pictues of oscilloscope.
+	% Circuit diagrams:
+		% Label components with values directly.
+		% Denote ground explicitly.
+	% Make xlim on plots comforatably accomodate data.
+	% If data is very spread out, make secondary plots zoomed in on the 
+	% interesting part of the data.
+% Data analysis
+	% Agreement to uncertainty means consistency with zero, so if 0 is within 
+	% (expected) - (measured) \pm (error prop for -), then it agrees to within
+	% uncertainty.
+	% If something does not agree to within uncertainty, note by how many
+	% standard deviations (sigmas)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\thispagestyle{empty}
+
+	\begin{center}
+		\includegraphics[width = 0.4\textwidth]{Stony_Brook_U_logo_vertical.svg.png}
+	\end{center}
+	\vspace{5mm}
+	\begin{center}
+		\textbf{\begin{LARGE}
+		PHY 335 Unit 5 Lab Report
+		\end{LARGE}}
+		\vspace{5mm}
+	\end{center}
+	\begin{center}
+		{\large Prepared for the gaze of Gannon Lawley}\\
+		\vspace{20mm}
+	\end{center}
+	\begin{center}
+		\textbf{\large James Cross and Will Lancer}\\
+		\vspace{20mm}
+	\end{center}
+	\begin{center}
+	\includegraphics[width=.3\textwidth]{jamer.jpg}\hfill
+	\includegraphics[width=.3\textwidth]{mee.jpg}\hfill
+	\includegraphics[width=.3\textwidth]{gannon.jpg}
+	\end{center}
+	\vspace{0.7in}
+	\begin{center}
+		\textbf{\large Department of Physics}\\
+		{\large State University of New York at Stony Brook}\\
+		{\large November 2024\\}
+	\end{center}
+
+\newpage
+
+	\begin{center}
+	{\huge \textbf{PHY 335: Unit 5 Lab Report}}
+
+	\vspace{5pt}
+
+	{\textbf{Will Lancer and James Cross}}
+
+	\vspace{5pt}
+
+	{\textbf{November 4, 2024}}
+	\vspace{5pt}
+
+	{\Large \textbf{Abstract}}
+	\end{center}
+	\begin{raggedleft}
+	\lettrine{T}{his} lab utilizes the operational amplifier (opamp) to produce 
+	circuits not possible with passive components alone. In this lab, we 
+	construct the voltage follower, non-inverting and inverting amplifiers, and 
+	opamp differentiator. Additionally, we measure non-ideal properties of the
+	opamp such as the slew rate.
+	\end{raggedleft}
+
+\newpage
+
+% Introduction
+\section{Introduction}
+
+So, throughout this course, we've learned that basically
+everything is a voltage divider; you put some voltage in,
+and depending on the neat arrangement of impedances on your
+breadboard, you get some (lower) voltage out. What if we
+wanted \emph{more} voltage instead? In comes the veritable
+\vocab{opamp}. This is the dream of experimentalists everywhere:
+a linear circuit element with incredibly high input impedance,
+incredibly low output inpedance, and very high/low gain.
+
+Let's now get into some subtleties of opamps. The first is
+their modus operandi: what are they ``trying to do''? The
+one and only goal in the life of an opamp is to satisfy
+the equation
+\begin{align*}
+	V_{\rm out} = A (V_+ - V_-).
+\end{align*}
+If you just run a voltage through the opamp, you can
+get its \vocab{open loop gain}; this is just the
+gain you get when the output isn't connected to the
+input in any way. Theoretically, this gain is infinite;
+in practice, it is just very high, usually something like $\sim 10^5$.
+We can express things like this in math via the
+\vocab{transfer function},
+\begin{align*}
+	G(\omega) = \frac{V_{\rm out}}{V_{\rm in}} = \frac{G_{\rm open}(\omega)}{1 + \beta G_{\rm open}(\omega)}
+\end{align*}
+Similar to how we do theory (make everything into a simple
+harmonic oscillator), we would like to implement some stability
+into the opamp, or in other words, implement a \vocab{negative feedback} loop.
+In practice this is done by feeding some portion of $V_{\rm out}$
+back into the inverting connection, $V_-$. When the opamp
+is in the negative feedback regieme, the \vocab{Golden Rules}
+apply; these are the statements
+\begin{align*}
+	& V_+ = V_-
+	& I_+ = I_- = 0.
+\end{align*}
+These rules tell you how to analyze opamps theoretically.
+We may apply these ideas to make some basic circuits, which
+are all exactly what they sound like.
+\begin{itemize}
+	\item \vocab{Follower}. The voltage follower is just a circuit
+	whose output is connected to its inverting input; by the Golden
+	Rules, the output voltage tries to equal whatever $V_+$ is at.
+	\item \vocab{Amplifiers}. There are three kinds of amplifiers:
+	\vocab{inverting}, \vocab{non-inverting}, and \vocab{differential}.
+	These do exactly what you think they do. The inverting amplifier
+	produces a larger (or smaller), inverted signal. The non-inverting amplifier
+	produces a larger, non-inverted signal, and the differential
+	amplifer produces an output voltage proportional to the difference
+	in input voltages for $V_+$ and $V_-$. The equations for these found
+	via the Golden Rules are respectively $G = (R_1 + R_2)/R_2$, $G = -R_2/R_1$,
+	and $V_{\rm out} = (R_2/R_1)(V_{in, +} - V_{\rm in, -})$. \label{amplifiers}
+	\item \vocab{Current source}. If one wants a current source
+	in a circuit, they can use an opamp to do so. Apply the Golden
+	Rules to a circuit with a load connected to its output,
+	and a resistor through its path to ground, and you will
+	get a (voltage controlled) current source. The equation
+	for this circuit is $I_{\rm load} = V_{\rm in}/R$. 
+	\item \vocab{Differentiators and integrators}. If you simply
+	attach a high and low pass circuit respectively through the
+	output of an opamp, you will get a differentiator and integrator
+	respectively. It's really that simple. The equations for these
+	guys can be found via the Golden Rules, and are respectively
+	$V_{\rm out} = - RC dV_{\rm in}/dt$ and 
+	$V_{\rm out} = - (1/RC) \int V_{\rm in} + C$.
+\end{itemize}
+What's the update time of an opamp? The approximate answer
+is ``really fast'', but what the answer isn't is ``instant'';
+in comes the idea of \vocab{slew rate}. The slew rate is the
+maximum rate at which an opamp can change its output voltage.
+This is a frequency dependent and input voltage dependent idea,
+as can be encapulated in the equation
+\begin{align}
+	SR = 2\pi V_0 f.
+	\label{slew}
+\end{align}
+
+% Data and procedures
+\newpage
+\section{Data and procedures}
+
+\subsection{Opamp logistics}
+
+\noin
+Looking at the data sheet \href{https://www.ti.com/lit/ds/symlink/tl081.pdf}{here}, 
+we see that
+\begin{itemize}
+	\item \textbf{Maximum supply voltage:} $\pm 18\si{\volt}$ (or
+	$36\si{\volt}$ across the terminals).
+	\item \textbf{Open-loop amplification:} typically around $125\si{\decibel}$
+	\item \textbf{Minimum load resistance:} the minimum load resistance
+	for an output voltage $<18 \si{\volt}$ over a $0.25 \si{\watt}$ resistor is
+	$\sim 440 \si{\ohm}$, based on figure 5-12 of the data sheet. 
+\end{itemize}
+
+\subsection{Voltage follower}
+
+\subsubsection{DC voltage follower test}
+We build a voltage divider controlled by a potentiometer and attach the output 
+to the input of an opamp voltage follower as shown below:
+
+\begin{figure}[H]
+	\centering
+	\begin{circuitikz}
+%		%Grid
+%		\def\length{4}
+%		\draw[thin, dotted] (-\length,-\length) grid (\length,\length);
+%		\foreach \i in {1,...,\length}
+%		{
+%			\node at (\i,-2ex) {\i};
+%			\node at (-\i,-2ex) {-\i};	
+%		}
+%		\foreach \i in {1,...,\length}
+%		{
+%			\node at (-2ex,\i) {\i};	
+%			\node at (-2ex,-\i) {-\i};	
+%		}
+%		\node at (-2ex,-2ex) {0};
+	
+		%Circuit
+		% \node[op amp, noinv input up] at (0,0) (opamp) {};
+		% \node[ground] at (-3.69,-3) (ground) {};
+		% \draw[-latex] (opamp.up) -- ++(0,0.5) node [above] {$+15\si{\volt}$};
+		% \draw[-latex] (opamp.down) -- ++(0,-0.5) node [below] {$-15\si{\volt}$};
+		% \draw (opamp.out) to[short,-*] ++(1.5,0) node[shift={(0.6,0)}] {$V_{\rm out}$};
+		% \draw (1.66,0) to[short,*-] ++(0,-2.5) -- ++(-3.5,0) -- ++(0,2) -- (opamp.-);
+		% \draw (opamp.+) -- ++(-2.5,0) to[sV, l_=$V_{\rm in}$] (ground);
+		\node[op amp, noinv input up] at (0,0) (opamp) {};
+		\draw (opamp.up) to (-0.1,3)
+		to (-6,3) to[battery1, l={$15 \si{\volt}$}] (-6,0)
+		to (-6.5,0) node[ground]{};
+		\draw (opamp.down) to (-0.1,-3)
+		to (-6,-3) to[battery1, l_={$-15 \si{\volt}$}] (-6,0);
+		\draw (opamp.-) to (-1.5, -0.5) 
+		to (-1.5, -1.25) to (-1.25, -1.25) to [crossing] (1.05, -1.25) 
+		to (1.2, -1.25) to (opamp.out) 
+		to [rmeter,t={$V_\text{out}$}] (3,0) to node[ground]{} (3,0);
+		\draw (-3,3) to [R,a={$10 \si{\kilo\ohm}$}] (-3,1) 
+		to [american potentiometer,a={$10 \si{\kilo\ohm}$}, n=pot] (-3,-1) 
+		to [R,a={$10 \si{\kilo\ohm}$}] (-3,-3);
+		\draw (opamp.+) to (-1.5,0.5) to (pot.wiper);
+		\draw (-1.5,0.5) to (-1.5,1.25) to (-1.25,1.25) 
+		to [crossing] (1.05, 1.25) to (1.2, 1.25)
+		to [rmeter,t={$V_\text{in}$}] (3,1.25) to node[ground]{} (3,1.25);
+		
+		
+	\end{circuitikz}
+	\caption{The voltage follower for the experiment.}
+	\label{circ:follower}
+\end{figure}
+
+
+To test that the voltage follower matches the input and output voltages, we
+sweep the input voltage and measure the input and output of the opamp.
+If the voltage follower is working, then we expect $V_{\rm out} = V_{\rm in}$ 
+within uncertainty.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|l|l|l|}
+	\hline
+	$V_{\rm in}$ (V)   & $V_{\rm out}$ (V)  & $V_{\rm in} - V_{\rm out}$ (V) & Agreement within uncertainty? \\
+	\hline
+	$-4.907 \pm 0.001$ & $-4.904 \pm 0.002$ & $-0.003 \pm 0.002$           & No; $1.5$ sigma                  \\
+	$-4.015 \pm 0.003$ & $-4.012 \pm 0.001$ & $-0.003 \pm 0.003$           & Yes                           \\
+	$-3.023 \pm 0.002$ & $3.02 \pm 0.002$   & $-0.003 \pm 0.003$           & Yes                           \\
+	$-1.914 \pm 0.001$ & $-1.912 \pm 0.001$ & $-0.002 \pm 0.001$           & No; $2$ sigma                 \\
+	$-1.051 \pm 0.001$ & $-1.05 \pm 0.002$  & $-0.001 \pm 0.002$           & Yes                           \\
+	$-0.022 \pm 0.002$ & $-0.021 \pm 0.001$ & $-0.001 \pm 0.002$           & Yes                           \\
+	$1.036 \pm 0.003$  & $1.046 \pm 0.001$  & $-0.01 \pm 0.003$            & Yes                           \\
+	$2.072 \pm 0.002$  & $2.081 \pm 0.001$  & $-0.009 \pm 0.002$           & No; $4.5$ sigma                 \\
+	$3.081 \pm 0.002$  & $3.09 \pm 0.002$   & $-0.009 \pm 0.003$           & No; $3$ sigma                 \\
+	$4.043 \pm 0.002$  & $4.05 \pm 0.002$   & $-0.007 \pm 0.003$           & No; $2.3$ sigma                 \\
+	$4.951 \pm 0.002$  & $4.958 \pm 0.001$  & $-0.007 \pm 0.002$           & No; $3.5$ sigma                 \\
+	\hline
+	\end{tabular}
+	\caption{A sweep of input voltages and the corresponding measured
+	output voltages, as well as the agreement to within uncertainty
+	for each measurement. We state the $\sigma$ difference if there
+	is not agreement to within uncertainty.}
+\end{table}
+
+We can see that out of the $11$ measurements, $5$ of them
+agreed to within uncertainty. We now consider the voltage divider.
+
+\subsubsection{Loading the opamp}
+To compare the voltage divider with the opamp follower with the divider without
+an opamp, we put a load on the output. Setting the voltage to 
+$\sim 5 \si{\volt}$, we calculate a Thevenin resistance of 
+$R_{\rm Th} \approx 6600\si{\ohm}$ for the divider. We then choose a load 
+resistor of $1 \si{\kilo\ohm}$ since it is both less than the Thevenin 
+equivalent but larger than the minimum load impedance of 
+$\approx 440 \si{\volt}$.
+To test the divider with the voltage follower, attach a load resistor to the 
+output of the opamp and measure the voltage. 
+Remove the opamp, attach the load resistor to the output of the voltage 
+divider, and measure the output voltage again.
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|c|}
+		\hline
+		 & $V_{\rm in}$ (V) & $V_{\rm out}$ (V)\\
+		\hline
+		Loaded & $4.934 \pm 0.001$ & $4.933 \pm 0.001$\\
+		Unloaded & $4.934 \pm 0.001$ & $0.6497 \pm 0.003$\\
+		\hline
+	\end{tabular}
+	\caption{Measured $V_{\rm in}$ and $V_{\rm out}$ values
+	for the voltage follower.}
+\end{table}
+
+% measured resistor value
+% calculate thevenin equivalent of divider based on choice of 10k and 20k ohm
+% resistors
+% note off zero of DMM for different days
+
+\noin
+\textbf{Remark:} Note that on the day of the experiment, all voltages were offset
+by $0.006 \pm 0.001 \si{\volt}$, as the DMM ground voltage was this
+number instead of zero.
+\label{voltage_offset}
+
+\subsubsection{AC voltage follower test}
+
+Using our opamp voltage follower, we now feed in a
+signal from the signal generator and measure the output
+voltage vs. the input voltage as a function of the frequency
+of the signal generator. We use two different input amplitudes:
+$1 \pm 0.02 \si{\volt}$ and $10 \pm 0.01 \si{\volt}$.
+We record the input and output voltages, and conclude
+if they agree to within uncertainty. Below is the table for the 
+$19.95 \si{\decibel}$ target 
+gain, while the full collection of measurements are in the appendix. 
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|c|}
+	\hline
+	Frequency (Hz) & Input Voltage (V) & Output Voltage (V)\\
+	\hline
+	$10$ & $2.02 \pm 0.02$ & $1.98 \pm 0.02$ \\
+	$20$ & $2.10 \pm 0.02$ & $2.14 \pm 0.04$ \\
+	$45$ & $2.12 \pm 0.02$ & $2.14 \pm 0.02$ \\
+	$100$ & $2.12 \pm 0.02$ & $2.16 \pm 0.02$ \\
+	$200$ & $2.10 \pm 0.02$ & $2.14 \pm 0.02$ \\
+	$450$ & $2.12 \pm 0.02$ & $2.14 \pm 0.02$ \\
+	$1\text{k}$ & $2.12 \pm 0.02$ & $2.14 \pm 0.02$ \\
+	$2\text{k}$ & $2.12 \pm 0.02$ & $2.14 \pm 0.02$ \\
+	$4.5\text{k}$ & $2.12 \pm 0.02$ & $2.12 \pm 0.02$ \\
+	$10\text{k}$ & $2.12 \pm 0.02$ & $2.10 \pm 0.04$ \\
+	$20\text{k}$ & $2.12 \pm 0.02$ & $2.12 \pm 0.02$ \\
+	$45\text{k}$ & $2.12 \pm 0.02$ & $2.10 \pm 0.02$ \\
+	$100\text{k}$ & $2.12 \pm 0.02$ & $2.12 \pm 0.02$ \\
+	$200\text{k}$ & $2.12 \pm 0.04$ & $2.12 \pm 0.02$ \\
+	$450\text{k}$ & $2.12 \pm 0.02$ & $2.14 \pm 0.02$ \\
+	$1\text{M}$ & $2.12 \pm 0.02$ & $2.16 \pm 0.04$ \\
+	$2\text{M}$ & $2.06 \pm 0.02$ & $2.46 \pm 0.02$ \\
+	\hline
+	\end{tabular}
+	\caption{Voltage measurements across different frequencies for channels 1 and 2,
+	for the $\sim 1\si{\volt}$ input signal.}
+	\label{tab:voltage_measurements}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|c|}
+	\hline
+	Frequency (Hz) & Input Voltage (V) & Output Voltage (V) \\
+	\hline
+	$10$ & $20.0 \pm 0.02$ & $20.0 \pm 0.02$ \\
+	$20$ & $20.0 \pm 0.02$ & $20.0 \pm 0.02$ \\
+	$45$ & $20.0 \pm 0.02$ & $20.4 \pm 0.02$ \\
+	$100$ & $20.4 \pm 0.02$ & $20.8 \pm 0.02$ \\
+	$200$ & $20.0 \pm 0.02$ & $20.4 \pm 0.02$ \\
+	$450$ & $20.0 \pm 0.02$ & $20.4 \pm 0.02$ \\
+	$1\text{k}$ & $20.0 \pm 0.02$ & $20.4 \pm 0.02$ \\
+	$2\text{k}$ & $20.0 \pm 0.02$ & $20.4 \pm 0.02$ \\
+	$4.5\text{k}$ & $20.0 \pm 0.02$ & $20.4 \pm 0.02$ \\
+	$10\text{k}$ & $20.0 \pm 0.02$ & $20.4 \pm 0.02$ \\
+	$20\text{k}$ & $20.0 \pm 0.02$ & $20.4 \pm 0.02$ \\
+	$45\text{k}$ & $20.0 \pm 0.02$ & $20.40 \pm 0.02$ \\
+	$100\text{k}$ & $20.0 \pm 0.02$ & $20.4 \pm 0.02$ \\
+	$200\text{k}$ & $20.0 \pm 0.04$ & $20.4 \pm 0.02$ \\
+	$450\text{k}$ & $20.0 \pm 0.04$ & $16.4 \pm 0.02$ \\
+	$1\text{M}$ & $20.0 \pm 0.02$ & $8.00 \pm 0.02$ \\
+	$2\text{M}$ & $20.0 \pm 0.02$ & $5.20 \pm 0.4$ \\
+	\hline
+	\end{tabular}
+	\caption{Voltage measurements across different frequencies for channels 1 and 2,
+	for the $\sim 12\si{\volt}$ frequency.}
+	\label{tab:voltage_measurements_chung}
+\end{table}
+
+\subsection{Non-inverting and inverting opamp}
+% mention input voltage
+% describe binary search-esque method for finding breakdown
+
+
+\subsubsection{Non-inverting amplifier}
+
+First we check that the $\pm 15 \si{\volt}$ knobs are
+turned to the right. Then we connect them to the rails
+of the circuit ($V_+ > 15 \si{\volt}$ and $V_- < - 15 \si{\volt}$). 
+We then build the following circuit,
+which will be our non-inverting amplifier:
+
+\begin{figure}[H]
+	\centering
+	\begin{circuitikz}
+
+		%		%Grid
+		%		\def\length{4}
+		%		\draw[thin, dotted] (-\length,-\length) grid (\length,\length);
+		%		\foreach \i in {1,...,\length}
+		%		{
+		%			\node at (\i,-2ex) {\i};
+		%			\node at (-\i,-2ex) {-\i};	
+		%		}
+		%		\foreach \i in {1,...,\length}
+		%		{
+		%			\node at (-2ex,\i) {\i};	
+		%			\node at (-2ex,-\i) {-\i};	
+		%		}
+		%		\node at (-2ex,-2ex) {0};
+				
+			%Circuit
+			\node[op amp, noinv input up] at (0,0) (opamp) {};
+			\node[ground] at (-3.19,-2.5) {};
+			\draw (-3.19,-1.65) to[pR,n=pr,a={$10\si{\kilo\ohm}$}] (-0.2,-1.65) 
+			to (2.2,-1.65);
+			\draw (opamp.-) -- ++(-0.5,0) -- (pr.wiper);
+			\draw (opamp.+) -- ++(-2,0) to[sV, l_=$V_{\rm in}$] ++(0,-2) -- ++(0,-1);
+			\draw (opamp.up) -- ++(0,0.5) node[right] {$V_+$};
+			\draw (opamp.down) -- ++(0,-0.5) node[right] {$V_-$};
+			\draw (opamp.out) to ++(1,0) 
+			to ++(0,-1.65);
+			\draw (opamp.out) to ++(2,0) to [rmeter,t={$V_\text{out}$}]
+			++(0,-1.65) to node[ground]{} ++(0,0);
+		
+		\end{circuitikz}
+		\caption{The non-inverting amplifier.}
+\end{figure}
+
+To test the non-inverting amplifier, we measure various gains
+and various frequencies with gains between $0 \si{\decibel}$ and 
+$26 \si{\decibel}$; specifically, we measure
+a sweep of frequencies for each given gain value. We employ a psuedo
+``binary-search'' algorithm, intended on finding the lowest frequency
+that produces noticable differences in the predicted and measured gain,
+i.e. when the slew rate has set in. The algorithm is implemented by:
+\begin{enumerate}
+	\label{binary_search}
+	\item Measure the gain at $10\si{\hertz}$ and at $2\si{\mega \hertz}$. 
+	Note that the slew rate will be salient for $2\si{\mega \hertz}$.
+	\item Split the \emph{logarithmic} difference between $10\si{\hertz}$
+	and $2\si{\mega \hertz}$; this comes out to be $1.414\si{\kilo\hertz}$.
+	Measure the gain at this frequency.
+	\item Measure the gain at this frequency; if the slew rate is present
+	(the measured gain is lower than the predicted gain), go lower
+	in frequency by splitting the logarithmic difference between
+	the current frequency and $10\si{\hertz}$. If the slew rate is 
+	not present go higher in frequency by splitting the logarithmic 
+	difference between the current frequency and $2\si{\mega\hertz}$.
+	\item Repeat step 3 until a frequency is found where the slew
+	rate is present, i.e. a frequency such that the measured gain
+	is less than the predicted gain.
+\end{enumerate}
+The results of this algorithm are collated into the tables
+below:
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|c|c|c|}
+	\hline
+	Frequency (Hz)    & $V_{\rm in}$ (mV) & $V_{\rm out}$ (V) & Measured gain (dB) & Target gain (dB) \\
+	\hline
+	$10$              & $540 \pm 40$     & $10.4 \pm 0.2$    & $19.259 \pm 1.474$ & 19.95            \\
+	$1.414\text{k}$   & $468 \pm 4$      & $10.1 \pm 0.1$    & $21.581 \pm 0.282$ & 19.95            \\
+	$53.178\text{k}$  & $508 \pm 4$      & $10.2 \pm 0.2$    & $20.079 \pm 0.424$ & 19.95            \\
+	$326.122\text{k}$ & $508 \pm 2$      & $4.48 \pm 0.08$   & $8.819 \pm 0.161$  & 19.95            \\
+	$2\text{M}$       & $480 \pm 20$     & $1.20 \pm 0.02$   & $2.5 \pm 0.112$    & 19.95            \\
+	\hline
+	\end{tabular}
+	\caption{Measured input voltage vs. output voltage at a range of
+	frequencies, up until the slew rate is seen.}
+\end{table}
+
+\newpage
+\subsubsection{Inverting amplifier}
+
+First we check that the $\pm 15 \si{\volt}$ were
+turned to the right. Then we connect them to the rails
+of the circuit. We then built the following circuit,
+which will be our inverting amplifier:
+\begin{figure}[H]
+	\centering
+	\begin{circuitikz}
+
+		%		%Grid
+		%		\def\length{4}
+		%		\draw[thin, dotted] (-\length,-\length) grid (\length,\length);
+		%		\foreach \i in {1,...,\length}
+		%		{
+		%			\node at (\i,-2ex) {\i};
+		%			\node at (-\i,-2ex) {-\i};	
+		%		}
+		%		\foreach \i in {1,...,\length}
+		%		{
+		%			\node at (-2ex,\i) {\i};	
+		%			\node at (-2ex,-\i) {-\i};	
+		%		}
+		%		\node at (-2ex,-2ex) {0};
+				
+		% %Circuit
+		% \node[op amp] at (0,0) (opamp) {};
+		% \node[ground] at (-3.19,-2.5) {};
+		% \draw (opamp.+) -- ++(-0.5,0) -- ++(0,-1.15) to[short,-*] ++(-1.5,0);
+		% \draw (opamp.-) -- ++(-2,0) to[sV, l_=$V_{\rm in}$] ++(0,-2) -- ++(0,-1);
+		% \draw[-latex] (opamp.up) -- ++(0,1) node[above] {$V_+$};
+		% \draw[-latex] (opamp.down) -- ++(0,-1) node[below] {$V_-$};
+		% \draw (opamp.out) to[short, -*] ++(1,0) node[shift={(0.6,0)}] {$V_{\rm out}$};
+	
+		\node[op amp, noinv input up] at (0,0) (opamp) {};
+		\draw (-3.19,-1.65) to[pR,n=pr,a={$10\si{\kilo\ohm}$}] (-0.2,-1.65) 
+		to (2.2,-1.65);
+		\draw (-3.19,-1.65) to[sV, l_=$V_{\rm in}$] ++(0,-1) node[ground]{};
+		\draw (opamp.-) -- ++(-0.5,0) -- (pr.wiper);
+		\draw (opamp.+) -- ++(-1,0) node[ground]{}; %to[sV, l_=$V_{\rm in}$] ++(0,-2) -- ++(0,-1);
+		\draw (opamp.up) -- ++(0,0.5) node[right] {$V_+$};
+		\draw (opamp.down) -- ++(0,-0.5) node[right] {$V_-$};
+		\draw (opamp.out) to ++(1,0) 
+		to ++(0,-1.65);
+		\draw (opamp.out) to ++(2,0) to [rmeter,t={$V_\text{out}$}]
+		++(0,-1.65) to node[ground]{} ++(0,0);
+
+		\end{circuitikz}
+		\caption{The inverting amplifier.}
+\end{figure}
+
+We test this circuit via the algorithm (\ref{binary_search}).
+We use the oscilloscope to display the output voltages and
+measure the gain.
+Below is the data for the $19.953 \si{\decibel}$ target gain measurements.
+The rest of the data can be found in the appendix.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|c|c|c|}
+	\hline
+	Frequency (Hz)    & $V_{\rm in}$ (mV) & $V_{\rm out}$ (V) & Measured gain (dB) & Target gain (dB) \\
+	\hline
+	$10$              & $460 \pm 4$      & $9.76 \pm 0.08$   & $21.217 \pm 0.254$ & 19.953           \\
+	$1.414\text{k}$   & $448 \pm 4$      & $9.76 \pm 0.08$   & $21.786 \pm 0.264$ & 19.953           \\
+	$53.178\text{k}$  & $440 \pm 4$      & $9.12 \pm 0.08$   & $20.727 \pm 0.262$ & 19.953           \\
+	$326.122\text{k}$ & $480 \pm 4$      & $3.84 \pm 0.08$   & $8.0 \pm 0.18$     & 19.953           \\
+	$2\text{M}$       & $480 \pm 8$      & $.712 \pm 0.002$  & $1.483 \pm 0.025$  & 19.953           \\
+	\hline
+	\end{tabular}
+	\caption{Measured input voltage vs. output voltage at a range of
+	frequencies, up until the slew rate is seen for the inverting amplifier.}
+\end{table}
+
+\newpage
+\subsection{Differentiator}
+
+First, we tune the $+15 \si{\volt}$ and $-15 \si{\volt}$ output of the DC power 
+supply to $V_{\text{CC}+} = (15.049 \pm 0.10) \si{\volt}$ 
+(uncertainty estimated by variations in the value) and
+$V_{\text{CC}-} = -(15.014 \pm 0.005) \si{\volt}$.
+Then, we connect them to the rail voltages in the opamp.
+Next, we build the differentiator circuit pictured below and measure the output
+with the oscilloscope $V_\text{out}$.
+Finally, we measure the true value of the circuit components:
+$R = (98.51 \pm 0.01) \si{\kilo\ohm}$ and $C =(94.7 \pm 0.01) \si{\nano\farad}$.
+
+\begin{figure}[H]
+	\centering
+	\begin{circuitikz}
+		\draw
+			(0,0) node[op amp] (opamp) {}
+			(-3,-1.5) to node[pos=1,left]{b} (-3,-1)
+			to [sV={$V_\text{in}$}] (-3,1)
+			to node[pos=0,left]{r} (-3,1.5)
+			to [C={$C$}, a={$100 \si{\nano\farad}$}] (-1.2, 1.5)
+			to  (opamp.-)
+			(-1.2, 1.5) to [R={$R$}, a={$100 \si{\kilo\ohm}$}] (1.2,1.5)
+			to (opamp.out)
+			(-3, -1.5) to (-1.2, -1.5)
+			to (opamp.+)
+			(-1.2, -1.5) to node[ground]{} (-1.2, -2) 
+			(-1.2, -1.5) to node[pos=1,below]{b} (-0.7, -1.5) 
+			to [rmeter, t={$V_\text{out}$}] (1.2,-1.5) 
+			to node[pos=0,right]{r} (opamp.out)
+			;
+	\end{circuitikz}
+	\caption{
+		Circuit diagram for differentiating circuit. The circuit component 
+		values shown approximate the measured values of the components used. 
+		Measured values are $R = (98.51 \pm 0.01) \si{\kilo\ohm}$ and 
+		$C =(94.7 \pm 0.01) \si{\nano\farad}$.
+	}
+	\label{circ:diff}
+\end{figure}
+
+We tested the opamp with the following combinations of inputs and measured the
+$V_\text{pp,out}$. Because of the instability of the output waveforms, the
+oscilloscope sometimes mismeasured the $V_\text{pp}$. When this is the case, the 
+$V_\text{pp}$ is estimated from the picture in tables 
+\ref{tab:diff_output_triangle}-\ref{tab:diff_output_sine}. Manually measured
+$V_\text{pp,out}$'s are marked with an asterisk (*). 
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|c|c|c|}
+		\hline
+		Number 	& Waveform 		& $V_{\text{pp,in}}$ 							& $V_{\text{pp,out}}$ 				& Frequency  \\
+		\hline                                                                                                                  
+		1		& Triangle 		& $(256 \pm 60) \si{\milli\volt}$				& *$(18.2 \pm 0.2) \si{\volt} $		& $1 \si{\kilo\hertz}$ \\
+		\hline
+		2		& Triangle 		& $(272 \pm 60) \si{\milli\volt}$				& *$(1.0 \pm 0.2 \si{\volt}$		& $100 \si{\hertz}$ \\
+		\hline
+		3		& Triangle 		& $(272 \pm 60) \si{\milli\volt}$				& *$(400 \pm 100 \si{\milli\volt}$	& $50 \si{\hertz}$ \\
+		\hline
+		4		& Square		& $(388 \pm 60) \si{\milli\volt}$				& $(29.0 \pm 0.2) \si{\volt}$		& $1 \si{\kilo\hertz}$ \\
+		\hline
+		5		& Square 		& $(380 \pm 60) \si{\milli\volt}$				& $(29.2 \pm 0.2) \si{\volt}$		& $100 \si{\hertz}$ \\
+		\hline
+		6		& Square		& $(372 \pm 60) \si{\milli\volt}$ 				& $(29.0 \pm 0.2)\si{\volt}$		& $50 \si{\hertz}$ \\
+		\hline
+		7		& Sine			& $(276 \pm 60) \si{\milli\volt}$				& $(12.8 \pm 0.2) \si{\volt}$		& $1 \si{\kilo\hertz}$ \\
+		\hline
+		8		& Sine			& $(280 \pm 60) \si{\milli\volt}$				& *$(1.6 \pm 0.6) \si{\volt}$		& $100 \si{\hertz}$ \\
+		\hline
+		9		& Sine			& $(276 \pm 60) \si{\milli\volt}$				& *$(800 \pm 200) \si{\milli\volt}$	& $50 \si{\hertz}$ \\
+		\hline
+	\end{tabular}
+	\caption{
+		Table of inputs and $V_\text{pp,out}$ tested for the differentiator 
+		circuit in Figure \ref{circ:diff}. $V_\text{pp,out}$ was measured
+		either from the oscilloscope (unmarked) or manually (marked with *).
+		For manual measurements error is the larger between the size of the 
+		smallest subdivision and the peak thickness of the line.
+	}
+	\label{tab:diff_inputs}	
+\end{table}
+
+Using the same numbering, the oscilloscope gave the following outputs.
+As a sample of the full table of outputs provided in tables 
+\ref{tab:diff_output_triangle}-\ref{tab:diff_output_sine}
+in the appendix, below are the outputs of number 2 and 5.
+
+\begin{minipage}{0.45\textwidth}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=\textwidth]{./Figures/diff_2.jpg}
+		\caption{
+			Pictured above is the oscilloscope output for number 2 in tables
+			\ref{tab:diff_inputs} and 
+			\ref{tab:diff_output_triangle}-\ref{tab:diff_output_sine}.
+			This corresponded
+			to the triangle wave input at $V_\text{pp}=(272 \pm 60) \si{\volt}$ 
+			and $f=200 \si{\hertz}$. 
+			The input is in yellow with 
+			$100 \si{\milli\volt}/\text{div}$ and 
+			$2 \si{\milli\second}/\text{div}$, and 
+			the output is in blue with 
+			$2.00 \si{\volt}/\text{div}$ and 
+			$2 \si{\milli\second}/\text{div}$. 
+		}
+	\end{figure}
+\end{minipage}
+\hspace{0.1\textwidth}
+\begin{minipage}{0.45\textwidth}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=\textwidth]{./Figures/diff_5.jpg}
+		\caption{
+			Pictured above is the oscilloscope output for number 5 in tables
+			\ref{tab:diff_inputs} and
+			\ref{tab:diff_output_triangle}-\ref{tab:diff_output_sine}.
+			This corresponded
+			to the square wave input at $V_\text{pp}=(380 \pm 60) \si{\volt}$ 
+			and $f=200 \si{\hertz}$. 
+			The input is in yellow with
+			$100 \si{\milli\volt}/\text{div}$ and 
+			$1 \si{\milli\second}/\text{div}$, and 
+			the output is in blue with 
+			$5.00 \si{\volt}/\text{div}$ and 
+			$1 \si{\milli\second}/\text{div}$. 
+		}
+	\end{figure}
+\end{minipage}
+
+\subsection{Slew rate}
+
+We measure the slew rate using the voltage follower circuit \ref{circ:follower}
+with signal generator as $V_\text{in}$ in two separate ways. 
+
+In the first method, we set the input to a sine wave and use the math function
+to take the difference between the input and output of the voltage follower. 
+Then increase the voltage until the difference function significantly deviates
+from $0 \si{\volt}$. When take this voltage as the distortion voltage in
+equation (\ref{slew}). The measured distortion frequency was measured to be
+$(140 \pm 5) \si{\kilo\hertz}$, uncertainty based off of intervals between 
+measurements.
+
+\begin{minipage}{0.45\textwidth}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=\textwidth]{./Figures/dist_1.jpg}
+		\caption{
+			Picture of $V_\text{in}$ (yellow) and $V_\text{in} - V_\text{out}$ 
+			(purple). While there is very high uncertainty due to line 
+			thickness, $V_\text{in} - V_\text{out}$ has structure.
+		}
+	\end{figure}
+\end{minipage}
+\hspace{0.1\textwidth}
+\begin{minipage}{0.45\textwidth}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=\textwidth]{./Figures/dist_2.jpg}
+		\caption{
+			Picture of $V_\text{in}$ (yellow) and $V_\text{in} - V_\text{out}$ 
+			(purple). While there is very high uncertainty due to line 
+			thickness, $V_\text{in} - V_\text{out}$ has structure.
+		}
+	\end{figure}
+\end{minipage}
+
+In the second method, we set the input to a square wave and measured points to
+find the slope/slew rate. The points are 
+$(-3.200 \pm 0.1) \si{\volt}$ at $(616.0 \pm 4.0) \si{\nano\second}$ and
+$(4.300 \pm 0.1) \si{\volt}$ at $(948.0 \pm 4.0) \si{\nano\second}$.
+
+\subsection{Trigger Circuit}
+\label{sec:trigger_data}
+
+First, we checked that the $+15 \si{\volt}$ and $-15 \si{\volt}$ knobs on the 
+DC power supply were turned to the right.
+Then, we used the DC power supply for the rail voltage and built the following 
+circuit. 
+We then tested the circuit by placing the grounded lead 
+of the oscilloscope at the common grounds and the power lead at Output 1 before
+moving it to Output 2.
+Afterwards, we measured the component values. 
+
+\begin{figure}[H]
+	\centering
+	\begin{circuitikz}
+	\draw
+		(0,0) node[op amp] (opamp) {}
+		(opamp.+) to (-1.5,-0.5) 
+		to node[ground]{} (-1.5,-1)
+		(-1.2, 0.5) to (-1.2, 2)
+		to [C={$C$}, a={$10 \si{\nano\farad}$}] (1.2, 2)
+		to (1.2, 0)
+		(opamp.-) to (-3,0.5)
+		to [R={$R_1$}, a={$100 \si{\kilo\ohm}$}] (-3,-6)
+		(opamp.out) to (1.2,0)
+		to node[pos=1,right]{Output 1} (3,0)
+		to (3,-1.5)
+		to [R={$R_2$}, a={$2 \si{\kilo\ohm}$}] (-1.2, -1.5)
+		to (-1.2, -2.5)
+		;
+	\draw
+		(0,-4) node[op amp, yscale=-1] (opamp2) {}
+		(-3,-6) to (1.2,-6) 
+		to node[pos=1,right]{Output 2} (1.2, -4)
+		to (opamp2.out)
+		(opamp2.-) to (-1.5,-4.5) 
+		to node[ground]{} (-1.5,-5)
+		(opamp2.+) to (-1.2, -2.5)
+		to [R={$R_3$}, a={$10 \si{\kilo\ohm}$}] (1.2,-2.5) 
+		to (1.2,-6)
+		;
+	\end{circuitikz}
+	\caption{Circuit diagram for triggering circuit. The circuit component 
+		values shown approximate the measured values:
+		$R_1 = (98.43 \pm 0.05) \si{\kilo\ohm} \approx 100 \si{\kilo\ohm}$, 
+		$R_2 = (1.9597 \pm0.0005) \si{\kilo\ohm} \approx 2 \si{\kilo\ohm}$, 
+		$R_3 = (9.825 \pm 0.005) \si{\kilo\ohm} \approx 10 \si{\kilo\ohm}$, and 
+		$C = (10.2 \pm 0.02) \si{\nano\farad} \approx 10 \si{\nano\farad}$.
+		The defining feature of the circuit is its utilization of both positive
+		and negative feedback.
+	}
+\end{figure}
+
+At Output 1 and Output 2 respectively, the voltage was a constant 
+$(14.65 \pm 0.35) \si{\volt}$, and
+$-(14.10 \pm 0.40) \si{\volt}$, when
+judging uncertainty by line thickness.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{./Figures/scope_8_1.jpg}
+	\caption{
+		Pictured is the oscilloscope reading for the Output 1 at
+		$5 \si{volt}/\text{div}$ and $200 \si{\micro\second}/\text{div}$. 
+		The red marks the $0 \si{\volt}$ line. Output 1 appears as a thick
+		constant line at $(14.65 \pm 0.35) \si{\volt}$.
+	}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{./Figures/scope_8_2.jpg}
+	\caption{
+		Pictured is the oscilloscope reading for the Output 2 at
+		$5 \si{volt}/\text{div}$ and $200 \si{\micro\second}/\text{div}$. 
+		The red marks the $0 \si{\volt}$ line. Output 2 appears as a thick
+		constant line at $-(14.10 \pm 0.40) \si{\volt}$.
+	}
+\end{figure}
+
+
+\newpage
+% Analysis
+\section{Analysis}
+
+\subsection{Voltage follower}
+
+% expectation is that all the values from the table agree to within 
+% uncertainty of each other
+
+\subsubsection{DC follower test}
+For the voltage follower, we expect that all values 
+from the measurement agree to within uncertainty; this is false. 
+Only 5/11 of the measurements agree to within uncertainty. 
+This may be due to faulty circuit connections, or inaccurate measuring 
+equipment. There is also a systematic error with the DMM; the zero of 
+the DMM was offset by $0.008\si{\volt}$ on the day of the experiment, 
+as stated in remark (\ref{voltage_offset}).
+
+\subsubsection{Load test}
+Our expectations were
+achieved; the divider and opamp follower's 
+$V_{\rm in} = V_{\rm out}$ to within uncertainty, and the
+voltage divider's $V_{\rm in}$ and $V_{\rm out}$ disagreed to within
+uncertainty.
+
+% Expect the Vin and Vout of the follower with the load agree but the Vin and
+% Vout of the divider alone disagree
+
+\subsubsection{AC follower test}
+As we can see from the tables for the AC follower test,
+the input and output voltage agree to within uncertainty
+up to the slew rate cutoff frequency, at which they begin
+to disagree. This is at $f = 2\si{\mega\hertz}$ for the $\sim 1\si{\volt}$
+measurement, and at $f = 450\si{\kilo\hertz}$ for the $\sim 12\si{\volt}$ 
+measurement. 
+
+\subsection{Inverting and non-inverting amplifiers}
+
+Note that remark (\ref{voltage_offset}) applies for the
+non-inverting and inverting opamp experiments.
+We plot the data in the graphs below:
+
+\begin{figure}[H]
+	\centering
+	 \begin{minipage}{0.45\textwidth}
+		 \centering
+		 \includegraphics[width=0.9\textwidth]{Figures/exp4_graph.png} % first figure itself
+		 \caption{Frequency vs. target gain from the non-inverting amplifier.}
+	\end{minipage}\hfill
+    \begin{minipage}{0.45\textwidth}
+	    \centering
+	    \includegraphics[width=0.9\textwidth]{Figures/exp5_graph.png} % second figure itself
+		 \caption{Frequency vs. target gain from the inverting amplifier.}
+    \end{minipage}
+\end{figure}
+
+The points in green are the ones where the predicted
+and measured gain agree to within uncertainty; the points
+below the green line are the points we predict to agree
+with experiment within uncertainty. We have one outlier,
+that is the $2$nd data point from the left in the bottom row.
+For the inverting amplifier, as is evident from the data,
+we saw the inversion. Possible explanations for the outlier
+in the data is the DMM offset remark noted previously, or
+faulty connections.
+
+\subsection{Differentiator}
+When comparing the output waveforms to the expected waveforms, the 
+differentiator seems to qualitatively work better at lower frequencies for the 
+triangle and square waves, but better at higher frequencies for the sine wave.
+
+For the high frequency triangle and square wave measurements in particular, the
+output waveform appears like it is trying to ``settle" into the correct 
+waveform. Only the $2 \si{\kilo\hertz}$ measurements for both seem to not 
+settle in finite time. This is unexpected, since the data sheet for the TL082
+specifies a settling time of $0.1 \si{\micro\second}$ for better than $20 \%$
+accuracy, but the opamp is failing to settle in $500 \si{\micro\second}$.
+
+The expected $V_\text{pp,out}$ from (\ref{amplifiers}) 
+seem to agree with measurement for the lower frequencies tested.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|c|c|}
+		\hline
+		Number 	& $V_\text{pp,in}$ 					& Expected $V_\text{pp,out}$ 	& Measured $V_\text{pp,out}$ \\
+		\hline
+		1		& $(256 \pm 60) \si{\milli\volt}$	& $(9.55 \pm 2.24) \si{\volt}$	& $(18.2 \pm 0.2) \si{\volt}$ \\
+		\hline
+		2		& $(272 \pm 60) \si{\milli\volt}$	& $(1.01 \pm 0.22) \si{\volt}$	& $(1 \pm 0.2) \si{\volt}$ \\
+		\hline
+		3		& $(272 \pm 60) \si{\milli\volt}$	& $(507 \pm 112)\si{\milli\volt}$ & $(400 \pm 100) \si{\milli\volt}$ \\
+		\hline
+		4		& $(388 \pm 60) \si{\milli\volt}$	& N/A							& $(29.0 \pm 0.2) \si{\volt}$ \\
+		\hline
+		5		& $(380 \pm 60) \si{\milli\volt}$	& N/A							& $(29.2 \pm 0.2) \si{\volt}$ \\
+		\hline
+		6		& $(372 \pm 60) \si{\milli\volt}$	& N/A							& $(29.0 \pm 0.2) \si{\volt}$ \\
+		\hline
+		7		& $(276 \pm 60) \si{\milli\volt}$	& $(16.2 \pm 3.5) \si{\volt}$	& $(12.8 \pm 0.2) \si{\volt}$ \\
+		\hline
+		8		& $(280 \pm 60) \si{\milli\volt}$	& $(1.64 \pm 0.35) \si{\volt}$	& $(1.6 \pm 0.6) \si{\volt}$ \\
+		\hline
+		9		& $(276 \pm 60) \si{\milli\volt}$	& $(0.81 \pm 0.18) \si{\volt}$	& $(0.8 \pm 0.2) \si{\volt}$\\
+		\hline
+	\end{tabular}
+	
+\end{table}
+
+\subsubsection{Error Analysis}
+An explanation for why the quality waveform of the sine wave follows an 
+opposite trend of the triangle and square waves is the presence of a ground 
+loop in the system. This would also explain why there is so much uncertainty 
+(thickness) in the oscilloscope input signals found in the appendix.
+
+The disagreement at high frequencies seems to be due to the system not settling
+into a stable output. This is unexpected as previously stated due to not 
+meeting the specifications. Since this appears to be the opamp failing to meet
+specification, this may be due to an error with the opamp itself.
+
+Additionally, the input signal has an unusually large uncertainty. When
+disconnected from the rest of the circuit, the signal quality significantly 
+improved. This is due to the presence of a ground loop in the construction of 
+the circuit causing many small, rapid oscillations in the signal.
+
+\subsection{Slew rate}
+
+In the distortion frequency method, the slew rate calculated from formula 
+(\ref{slew}) is 
+$(17.9 \pm 0.6) \si{\volt / \micro\second}$. 
+In the slope method, the slew rate calculated is
+$(22.0 \pm 0.6) \si{\volt / \micro\second}$.
+When comparing to the $20 \si{\volt / \micro\second}$ in the datasheet, this 
+makes the slew rate for the slope method better than specification, but 
+worse for the distortion frequency method.
+
+\subsubsection{Error Analysis}
+
+The distortion frequency method may have underestimated the slew rate due to 
+some vagueness in constitutes a ``distortion." With the given scales used, 
+a distortion constitues a deviation by up to $1 \si{\volt}$ for a 
+$V_\text{pp,in} = (20.4 \pm 0.4) \si{\volt}$ input signal. This may be too 
+small of an error and would lead to an underestimate.
+
+\subsection{Trigger Circuit}
+
+It is as expected that the voltage is at a constant 
+$+15 \si{\volt}$ at Output 1 and a constant $-15 \si{\volt}$ at Output 2. 
+The constant behavior observed for both outputs in section 
+\ref{sec:trigger_data} lines up with expectations. However, only the 
+$(14.65 \pm 0.35) \si{\volt}$ measured at Output 1 agrees to within 
+uncertainty with the expected $+15 \si{\volt}$. The measured Output 2 
+$(14.10 \pm 0.40 \si{\volt}$ does not agree with the expected $-15 \si{\volt}$
+by $2.25 \sigma$. This is a significant deviation.
+
+
+\subsubsection{Error Analysis}
+A systematic error in the procedure was not measuring the exact rail voltages
+supplying the two opamps. Undervolting the $V_{\text{CC}-}$ rail could have 
+produced a lower output at Output 2. By not measuring, we also lacked estimates 
+on the uncertainties in the power supply and could not account for them.
+
+
+
+% Conclusion
+\section{Conclusion}
+
+Using a TL082 opamp, we built a voltage follower.
+The voltage follower matched theoretical predictions for
+5/11 measurements; possible reasons that the other measurements
+did not match predictions is because of faulty connections,
+or because of the inaccurate zero of the DMM that day.
+
+Attaching a load resistor to the output of our follower,
+$V_{\rm out} = V_{\rm in}$ to within uncertainty, and
+$V_{\rm out} \neq V_{\rm in}$ to within uncertainty
+for the divider alone. 
+
+Driving our voltage follower with an AC input signal,
+we observed that the following behavior was accurate
+up to the slew rate cutoff; this was at $\sim 450\si{\kilo\hertz}$
+for the $\sim 1 \si{\volt}$ input, and at $2\si{\mega\hertz}$
+for the $\sim 12 \si{\volt}$ signal.
+
+We built non-inverting and inverting amplifiers, and swept
+them through a range of frequencies and gains to observe their behaviors.
+Theoretical predictions were largely matched; there was one outlier,
+which may be explained through faulty connections. The
+slew rate was observed for both amplifiers, at
+identical frequencies and gains. Note that we saw the
+inversion for the inverting amplifier.
+
+We built a differentiator and swept it through a range
+of frequencies; qualitatively, the differentiator worked
+better for lower frequencies for the triangle and square
+waves, and at higher frequencies for the sine waves.
+A ground loop was present for the sine wave measurements,
+explaining its large error and opposite behavior to the
+triangle and square waves. The differentiator largely
+did not match theoretical predictions, though.
+
+We calculated the slew rate in two different ways,
+and the numbers did not agree to within uncertainty;
+both were off by around $2 \si{\volt}/\si{\micro\second}$
+from the predicted $20\si{\volt}/\si{\micro\second}$.
+
+We built a trigger circuit. The measured behavior matched
+the theoretically predicted behavior for the constancy
+measurements, but only the $\sim 15\si{\volt}$ measurement
+at Output $1$ agrees to within uncertainty to its predicted value.
+
+\newpage
+\section{Appendix}
+
+\subsection{Full non-inverting amplifier data}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|l|l|l|l|}
+	\hline
+	Frequency (Hz)    & $V_{\rm in}$ (mV) & $V_{\rm out}$ (V) & Measured gain (dB) & Target gain (dB) \\
+	\hline
+	$10$              & $540 \pm 40$     & $10.4 \pm 0.2$    & $19.259 \pm 1.474$ & 19.95            \\
+	$1.414\text{k}$   & $468 \pm 4$      & $10.1 \pm 0.1$    & $21.581 \pm 0.282$ & 19.95            \\
+	$53.178\text{k}$  & $508 \pm 4$      & $10.2 \pm 0.2$    & $20.079 \pm 0.424$ & 19.95            \\
+	$326.122\text{k}$ & $508 \pm 2$      & $4.48 \pm 0.08$   & $8.819 \pm 0.161$  & 19.95            \\
+	$2\text{M}$       & $480 \pm 20$     & $1.20 \pm 0.02$   & $2.5 \pm 0.112$    & 19.95            \\
+	\hline
+	\end{tabular}
+	\caption{Measured input voltage vs. output voltage at a range of
+	frequencies, up until the slew rate is seen.}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|l|l|l|l|}
+	\hline
+	Frequency (Hz)    & $V_{\rm in}$ (mV) & $V_{\rm out}$ (V) & Measured gain (dB) & Target gain (dB) \\
+	\hline
+	$10$              & $508 \pm 8$      & $5.44 \pm 0.04$   & $10.709 \pm 0.186$ & 10               \\
+	$1.414\text{k}$   & $500 \pm 4$      & $5.20 \pm 0.04$   & $10.4 \pm 0.115$   & 10               \\
+	$53.178\text{k}$  & $488 \pm 4$      & $5.04 \pm 0.04$   & $10.328 \pm 0.118$ & 10               \\
+	$326.122\text{k}$ & $488 \pm 4$      & $4.20 \pm 0.08$   & $8.607 \pm 0.178$  & 10               \\
+	$2\text{M}$       & $480 \pm 8$      & $0.8 \pm 0.04$    & $1.667 \pm 0.088$  & 10               \\
+	\hline
+	\end{tabular}
+	\caption{Measured input voltage vs. output voltage at a range of
+	frequencies, up until the slew rate is seen.}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|l|l|l|l|}
+	\hline
+	Frequency (Hz)    & $V_{\rm in}$ (mV) & $V_{\rm out}$ (V) & Measured gain (dB) & Target gain (dB) \\
+	\hline
+	$10$              & $512 \pm 4$      & $2.46 \pm 0.04$   & $4.805 \pm 0.087$  & 5                \\
+	$1.414\text{k}$   & $504 \pm 4$      & $2.50 \pm 0.02$   & $4.96 \pm 0.056$   & 5                \\
+	$53.178\text{k}$  & $484 \pm 8$      & $2.48 \pm 0.02$   & $5.124 \pm 0.094$  & 5                \\
+	$326.122\text{k}$ & $484 \pm 4$      & $2.50 \pm 0.02$   & $5.165 \pm 0.059$  & 5                \\
+	$2\text{M}$       & $480 \pm 8$      & $0.84 \pm 0.02$   & $1.75 \pm 0.051$   & 5                \\
+	\hline
+	\end{tabular}
+	\caption{Measured input voltage vs. output voltage at a range of
+	frequencies, up until the slew rate is seen.}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|l|l|l|l|}
+	\hline
+	Frequency (Hz)    & $V_{\rm in}$ (mV) & $V_{\rm out}$ (V) & Measured gain (dB) & Target gain (dB) \\
+	\hline
+	$10$              & $508 \pm 4$      & $1.60 \pm 0.02$   & $3.15 \pm 0.047$   & 3.16             \\
+	$1.414\text{k}$   & $496 \pm 4$      & $1.62 \pm 0.02$   & $3.266 \pm 0.048$  & 3.16             \\
+	$53.178\text{k}$  & $484 \pm 8$      & $1.60 \pm 0.02$   & $3.306 \pm 0.069$  & 3.16             \\
+	$326.122\text{k}$ & $484 \pm 4$      & $1.58 \pm 0.02$   & $3.264 \pm 0.049$  & 3.16             \\
+	$807.617\text{k}$ & $492 \pm 8$      & $1.52 \pm 0.04$   & $3.089 \pm 0.096$  & 3.16             \\
+	$1.27\text{M}$    & $488 \pm 4$      & $1.20 \pm 0.02$   & $2.459 \pm 0.046$  & 3.16             \\
+	$2\text{M}$       & $476 \pm 2$      & $0.900 \pm 0.02$  & $1.891 \pm 0.043$  & 3.16             \\
+	\hline
+	\end{tabular}
+	\caption{Measured input voltage vs. output voltage at a range of
+	frequencies, up until the slew rate is seen for the non-inverting
+	amplifier.}
+\end{table}
+
+\subsection{Full inverting amplifier data}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|l|l|l|l|}
+	\hline
+	Frequency (Hz)    & $V_{\rm in}$ (mV) & $V_{\rm out}$ (V) & Measured gain (dB) & Target gain (dB) \\
+	\hline
+	$10$              & $460 \pm 4$      & $9.76 \pm 0.08$   & $21.217 \pm 0.254$ & 19.953           \\
+	$1.414\text{k}$   & $448 \pm 4$      & $9.76 \pm 0.08$   & $21.786 \pm 0.264$ & 19.953           \\
+	$53.178\text{k}$  & $440 \pm 4$      & $9.12 \pm 0.08$   & $20.727 \pm 0.262$ & 19.953           \\
+	$326.122\text{k}$ & $480 \pm 4$      & $3.84 \pm 0.08$   & $8.0 \pm 0.18$     & 19.953           \\
+	$2\text{M}$       & $480 \pm 8$      & $.712 \pm 0.002$  & $1.483 \pm 0.025$  & 19.953           \\
+	\hline
+	\end{tabular}
+	\caption{Measured input voltage vs. output voltage at a range of
+	frequencies, up until the slew rate is seen for the inverting amplifier.}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|l|l|l|l|}
+	\hline
+	Frequency (Hz)    & $V_{\rm in}$ (mV) & $V_{\rm out}$ (V) & Measured gain (dB) & Target gain (dB) \\
+	\hline
+	$10$              & $480 \pm 4$      & $5.20 \pm 0.02$   & $10.833 \pm 0.099$ & 10               \\
+	$1.414\text{k}$   & $480 \pm 8$      & $5.20 \pm 0.02$   & $10.833 \pm 0.185$ & 10               \\
+	$53.178\text{k}$  & $460 \pm 4$      & $5.2 \pm 0.02$    & $11.304 \pm 0.107$ & 10               \\
+	$326.122\text{k}$ & $484 \pm 8$      & $4.32 \pm 0.02$   & $8.926 \pm 0.153$  & 10               \\
+	$2\text{M}$       & $476 \pm 4$      & $0.72 \pm 0.02$   & $1.513 \pm 0.044$  & 10               \\
+	\hline
+	\end{tabular}
+	\caption{Measured input voltage vs. output voltage at a range of
+	frequencies, up until the slew rate is seen for the inverting amplifier.}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|l|l|l|l|}
+	\hline
+	Frequency (Hz)    & $V_{\rm in}$ (mV) & $V_{\rm out}$ (V) & Measured gain (dB) & Target gain (dB) \\
+	\hline
+	$10$              & $500 \pm 4$      & $2.52 \pm 0.04$   & $5.04 \pm 0.09$    & 5                \\
+	$1.414\text{k}$   & $484 \pm 6$      & $2.60 \pm 0.02$   & $5.372 \pm 0.078$  & 5                \\
+	$53.178\text{k}$  & $472 \pm 4$      & $2.6 \pm 0.02$    & $5.508 \pm 0.063$  & 5                \\
+	$326.122\text{k}$ & $476 \pm 4$      & $2.56 \pm 0.04$   & $5.378 \pm 0.095$  & 5                \\
+	$807.617\text{k}$ & $480 \pm 4$      & $1.76 \pm 0.02$   & $3.667 \pm 0.052$  & 5                \\
+	$2\text{M}$       & $472 \pm 4$      & $0.72 \pm 0.02$   & $1.525 \pm 0.021$  & 5                \\
+	\hline
+	\end{tabular}
+	\caption{Measured input voltage vs. output voltage at a range of
+	frequencies, up until the slew rate is seen for the inverting amplifier.}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|l|l|l|l|}
+	\hline
+	Frequency (Hz)    & $V_{\rm in}$ (mV) & $V_{\rm out}$ (V) & Measured gain (dB) & Target gain (dB) \\
+	\hline
+	$10$              & $500 \pm 4$      & $1.6 \pm 0.02$    & $3.2 \pm 0.047$    & 3.16             \\
+	$1.414\text{k}$   & $492 \pm 4$      & $1.64 \pm 0.02$   & $3.333 \pm 0.049$  & 3.16             \\
+	$53.178\text{k}$  & $480 \pm 4$      & $1.6 \pm 0.02$    & $3.333 \pm 0.05$   & 3.16             \\
+	$326.122\text{k}$ & $476 \pm 4$      & $1.6 \pm 0.02$    & $3.361 \pm 0.051$  & 3.16             \\
+	$807.617\text{k}$ & $484 \pm 4$      & $1.64 \pm 0.02$   & $3.388 \pm 0.05$   & 3.16             \\
+	$1.27\text{M}$    & $480 \pm 4$      & $1.14 \pm 0.02$   & $2.375 \pm 0.046$  & 3.16             \\
+	$2\text{M}$       & $480 \pm 4$      & $0.780 \pm 0.02$  & $1.625 \pm 0.044$  & 3.16             \\
+	\hline
+	\end{tabular}
+	\caption{Measured input voltage vs. output voltage at a range of
+	frequencies, up until the slew rate is seen for the inverting amplifier.}
+\end{table}
+
+\subsection{Full oscilloscope outputs for differentiator circuit}
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|}
+		\hline
+		Number	& Output\\
+		\hline
+		1		& \includegraphics[width=0.65\textwidth]{./Figures/diff_1.jpg} \\
+		\hline
+		2		& \includegraphics[width=0.65\textwidth]{./Figures/diff_2.jpg} \\
+		\hline
+		3		& \includegraphics[width=0.65\textwidth]{./Figures/diff_3.jpg} \\
+		\hline
+	\end{tabular}
+	\caption{
+		Table of oscilloscope outputs for triangle inputs in table 
+		\ref{tab:diff_inputs}.
+	}
+	\label{tab:diff_output_triangle}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|}
+		\hline
+		Number	& Output\\
+		\hline
+		4		& \includegraphics[width=0.65\textwidth]{./Figures/diff_4.jpg} \\
+		\hline
+		5		& \includegraphics[width=0.65\textwidth]{./Figures/diff_5.jpg} \\
+		\hline
+		6		& \includegraphics[width=0.65\textwidth]{./Figures/diff_6.jpg} \\
+		\hline
+	\end{tabular}
+	\caption{
+		Table of oscilloscope outputs for square inputs in table 
+		\ref{tab:diff_inputs}.
+	}
+	\label{tab:diff_output_square}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|c|c|}
+		\hline
+		Number	& Output\\
+		\hline
+		7		& \includegraphics[width=0.65\textwidth]{./Figures/diff_7.jpg} \\
+		\hline
+		8		& \includegraphics[width=0.65\textwidth]{./Figures/diff_8.jpg} \\
+		\hline
+		9		& \includegraphics[width=0.65\textwidth]{./Figures/diff_9.jpg} \\
+		\hline
+	\end{tabular}
+	\caption{
+		Table of oscilloscope outputs for sine inputs in table 
+		\ref{tab:diff_inputs}.
+	}
+	\label{tab:diff_output_sine}
+\end{table}
+
+\end{document}
