@@ -1,0 +1,124 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[pdftex]{graphicx}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{william} 
+\usepackage{subcaption}
+\usepackage{circuitikz} % for circuits
+\usepackage{graphicx} % pictures
+\usepackage{wrapfig} % for wrapping pictures
+\usepackage{pgfplots} % graphs
+\usepackage[makeroom]{cancel} % for striking out math
+\usepackage{parskip} % consistent indentation
+\usepackage{lettrine}
+\usepackage{Zallman}
+
+% headers and footers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{Lab Partner and Other Lab Partner}
+\chead{}
+\rhead{PHY 335 Unit XYZ Lab Report}
+\lfoot{}
+\cfoot{\thepage}
+\rfoot{}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\headheight}{14pt}
+
+\linespread{1.03} % give a little extra room
+\setlength{\parindent}{0.2in} % reduce paragraph indent a bit
+
+% This is the magic: controls the font of the <letter>
+\renewcommand{\LettrineFontHook}{\Zallmanfamily}
+
+% This controls the font of the <text> 
+\renewcommand{\LettrineTextFont}{\Huge\scshape}
+
+% Bipoles Specifications
+\ctikzset{bipoles/thickness=1.2, label distance=1mm, voltage shift = 1}
+
+\DeclareSIUnit{\belmilliwatt}{Bm}
+\DeclareSIUnit{\dBm}{\deci\belmilliwatt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Feedback from last labs: 
+% put the feedback here for easy accesss
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\thispagestyle{empty}
+
+	\begin{center}
+		\includegraphics[width = 0.4\textwidth]{./Figures/Stony_Brook_U_logo_vertical.svg.png}
+	\end{center}
+	\vspace{5mm}
+	\begin{center}
+		\textbf{\begin{LARGE}
+		PHY 335 Unit XYZ Lab Report
+		\end{LARGE}}
+		\vspace{5mm}
+	\end{center}
+	% \begin{center}
+	{\large Prepared for the gaze of (insert your TA's name if they're cool;
+    if not then delete this line)}\\
+  % Gannon Lawley is cool with this
+	% 	\vspace{20mm}
+	% \end{center}
+	\begin{center}
+		\textbf{\large Lab Partner and Other Lab Partner}\\
+		\vspace{20mm}
+	\end{center}
+	% \begin{center}
+	% \includegraphics[width=.3\textwidth]{jamer.jpg}\hfill
+	% \includegraphics[width=.3\textwidth]{mee.jpg}\hfill
+	% \includegraphics[width=.3\textwidth]{gannon.jpg}
+	% \end{center}
+	\vspace{0.7in}
+	\begin{center}
+		\textbf{\large Department of Physics}\\
+		{\large State University of New York at Stony Brook}\\
+		{\large Month Year\\}
+	\end{center}
+
+\newpage
+
+	\begin{center}
+	{\huge \textbf{PHY 335: Unit XYZ Lab Report}}
+
+	\vspace{5pt}
+
+	{\textbf{Lab Partner and Other Lab Partner}}
+
+	\vspace{5pt}
+
+	{\textbf{Month Day, Year}}
+	\vspace{5pt}
+
+	{\Large \textbf{Abstract}}
+	\end{center}
+	\begin{raggedleft}
+	\lettrine{I}{ntroduction} to the lab.
+	\end{raggedleft}
+ % This is just a funny thing James and I did;
+ % if your TA isn't cool, then just delete that
+ % part. I will say, if your TA is Gannon Lawley,
+ % then he has historically been cool with this.
+
+\newpage
+
+% Introduction
+\section{Introduction}
+
+\section{Data}
+
+\section{Analysis}
+
+\section{Conclusion}
+
+\section{Appendices}
+
+\end{document}
