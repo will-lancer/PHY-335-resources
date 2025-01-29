@@ -1,0 +1,672 @@
+\ProvidesPackage{william}
+
+% general quality improvement
+\usepackage{mathtools}                % improves amsmath
+\usepackage[american]{babel}          % ensure correct hyphenation
+\usepackage[activate={true,nocompatibility},tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype} % better spacing
+    % activate={true,nocompatibility} - activate protrusion and expansion
+    % tracking=true, kerning=true, spacing=true - activate these techniques
+    % factor=1100 - add 10% to the protrusion amount (default is 1000)
+    % stretch=10, shrink=10 - reduce stretchability/shrinkability (default is 20/20)
+\microtypecontext{spacing=nonfrench}  % silence warning
+\newcommand{\microtoc}{               % turn off protrusion for table of contents
+  \microtypesetup{protrusion=false}
+  \tableofcontents
+  \microtypesetup{protrusion=true}
+}
+\usepackage{float} % for better figure placement
+
+% packages for one-off commands
+\usepackage{tensor}       % tensor indices
+\usepackage{siunitx}	% nicer units
+\usepackage[shortlabels]{enumitem}     % better enumeration
+\usepackage{slashed}      % Feynman slash
+\usepackage{bbm}          % indicator functions
+\usepackage{anyfontsize}  % adjust font sizes freely
+\usepackage{marvosym} 	  % heart emoji
+% \usepackage{CJKutf8}     % for writing chinese; use environment "chinese"
+\usepackage{multicol}	  % for multiple columns
+
+% for writing code in LaTeX
+\usepackage{listings}
+\newenvironment{python}{\begin{lstlisting}[language=Python]}{\end{lstlisting}}
+
+% customize lists
+\newlist{subpart}{enumerate}{1} % useful sublist
+\setlist[subpart,1]{label=(\alph*)}
+\setlist[itemize]{leftmargin=20pt} % decrease itemize indent
+
+% make headers sans serif; incompatible with titlesec and others
+\usepackage{sectsty}
+\allsectionsfont{\normalfont\sffamily\bfseries}
+
+% use links
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,
+    urlcolor=blue,
+}
+
+% produce bold upright vectors by manually unslanting existing letters
+\usepackage{xparse}
+\usepackage{bm}
+
+\newsavebox{\foobox}
+\newcommand{\slantbox}[2][0]{\mbox{ % performs a skew transformation
+        \sbox{\foobox}{#2}%
+        \hskip\wd\foobox
+        \pdfsave
+        \pdfsetmatrix{1 0 #1 1}%
+        \llap{\usebox{\foobox}}%
+        \pdfrestore
+}}
+\newcommand{\unslant}[2][-.15]{\slantbox[#1]{$#2$}}
+
+\ExplSyntaxOn
+\NewDocumentCommand\vectorInt{m}
+ {
+  \unslant_vector:n { #1 }
+ }
+
+\cs_new_protected:Npn \unslant_vector:n #1
+ {
+  \tl_map_inline:nn { #1 }
+   {
+    \unslant_vector_inner:n { ##1 }
+   }
+ }
+
+\cs_new_protected:Npn \unslant_vector_inner:n #1
+{
+  \tl_if_in:VnTF \g_unslant_latin_tl { #1 }
+   {
+    \mathbf { #1 } % a Latin letter
+   }
+   {
+    \tl_if_in:VnTF \g_unslant_greek_tl { #1 }
+     {
+	  \mkern-6mu \unslant{\bm{ #1 }} \mkern-1mu % a Greek letter that should be unslanted
+     }
+     {
+      \tl_if_in:VnTF \g_unslant_greekspecial_tl { #1 }
+       {
+	      \bm{ #1 } % a Greek letter that doesn't need unslanting
+       }
+       {
+        \bm{ #1 } % none of the above, default to bm
+       }
+     }
+   }
+}
+
+\tl_new:N \g_unslant_latin_tl
+\tl_new:N \g_unslant_greek_tl
+\tl_new:N \g_unslant_greekspecial_tl
+
+\tl_gset:Nn \g_unslant_latin_tl
+ {
+  ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  abcdefghijklmnopqrstuvwxyz
+ }
+\tl_gset:Nn \g_unslant_greek_tl
+ {
+  \alpha\beta\gamma\delta\epsilon\zeta\eta\theta\iota\kappa
+  \lambda\mu\nu\xi\pi\rho\sigma\tau\upsilon\phi\chi\psi\omega
+  \varepsilon\vartheta\varpi\varphi\varsigma\varrho
+ }
+\tl_gset:Nn \g_unslant_greekspecial_tl
+ {
+  \Gamma\Delta\Theta\Lambda\Pi\Sigma\Upsilon\Phi\Chi\Psi\Omega
+ }
+
+\ExplSyntaxOff
+
+\renewcommand{\v}[1]{\vectorInt{#1}}
+
+% make math bold when the context is bold, like in section headings
+\g@addto@macro\bfseries{\boldmath}
+
+% image macros
+\newcommand{\incgr}[2]{{\par \centering \includegraphics[scale=#1]{#2} \par}}
+\newcommand{\wincgr}[2]{{\par \centering \includegraphics[width=#1\textwidth]{#2} \par}}
+\newcommand{\hincgr}[2]{{\par \centering \includegraphics[height=#1\textheight]{#2} \par}}
+
+% color boxes
+
+\usepackage[usenames,dvipsnames]{xcolor} % more colors; needs
+% to be loaded before pgfplots or else there will be a conflict.
+
+% comments for personal notes
+\definecolor{notered}{rgb}{1.0,0.1,0.1}
+\definecolor{thoughtblue}{rgb}{0.1,0.1,1.0}
+\newcommand{\question}[1]{\color{notered} (\textbf{#1})\color{black}}
+\newcommand{\thought}[1]{\color{thoughtblue} (\textbf{#1})\color{black}}
+\newcommand{\answer}[1]{\color{green} (\textbf{#1})\color{black}}
+\newcommand{\note}[1]{\color{purple} (\textbf{#1})\color{black}}
+\newcommand{\vocab}[1]{\textbf{\color{blue}\sffamily #1}}
+\newcommand\sbullet[1][.5]{\mathbin{\vcenter{\hbox{\scalebox{#1}{$\bullet$}}}}} % for a small bullet point
+
+% thicc colorboxes
+
+\usepackage[many]{tcolorbox}
+\tcbuselibrary{theorems}
+
+% red
+\newtcbtheorem{pstrap}{Trap}{colback=red!10,colframe=red!50!black,fonttitle=\bfseries,breakable,enhanced}{tr}
+\newtcbtheorem{pstechnique}{Technique}{colback=red!10,colframe=red!50!black,fonttitle=\bfseries,breakable,enhanced}{te}
+
+% orange
+\newtcbtheorem{pssolution}{Solution}{colback=orange!10,colframe=orange!50!black,fonttitle=\bfseries,breakable,enhanced}{sn}
+
+% cyan
+\newtcbtheorem{pscanonprob}{Canonical Problems}{colback=cyan!10,colframe=cyan!50!black,fonttitle=\bfseries,breakable,enhanced}{sn}
+
+% green
+\newtcbtheorem{psexample}{Example}{colback=green!10,colframe=green!50!black,fonttitle=\bfseries,breakable,enhanced}{ex}
+\newtcbtheorem{pscasestudy}{Case Study}{colback=green!10,colframe=green!50!black,fonttitle=\bfseries,breakable,enhanced}{cs}
+
+% blue
+\newtcbtheorem{psidea}{Idea}{colback=blue!10,colframe=blue!50!black,fonttitle=\bfseries,breakable,enhanced}{id}
+\newtcbtheorem{pspattern}{Pattern}{colback=blue!10,colframe=blue!50!black,fonttitle=\bfseries,breakable,enhanced}{pt}
+\newtcbtheorem{psdefinition}{Definition}{colback=blue!10,colframe=blue!50!black,fonttitle=\bfseries,breakable,enhanced}{df}
+\newtcbtheorem{pstheorem}{Theorem}{colback=blue!10,colframe=blue!50!black,fonttitle=\bfseries,breakable,enhanced}{th}
+
+% purple
+\newtcbtheorem{psremark}{Remark}{colback=purple!10,colframe=purple!50!black,fonttitle=\bfseries,breakable,enhanced}{rm}
+
+% violet (actually purple)
+\newtcbtheorem{pslemma}{Lemma}{colback=violet!10,colframe=violet!50!black,fonttitle=\bfseries,breakable,enhanced}{lm}
+
+\tcbset{noparskip/.style={before={\par\pagebreak[0]\medskip\parindent=0pt},
+after={\par\medskip}}}
+
+
+% skinny (mdframed) colorboxes
+% skinny (mdframed) colorboxes
+\usepackage{thmtools}
+\usepackage[framemethod=TikZ]{mdframed}
+
+% blue
+
+\mdfdefinestyle{mdbluebox}{%
+roundcorner=10pt,
+linewidth=1pt,
+skipabove=12pt,
+innerbottommargin=9pt,
+skipbelow=2pt,
+linecolor=blue,
+nobreak=false,
+backgroundcolor=TealBlue!5,
+}
+\declaretheoremstyle[
+    headfont=\sffamily\bfseries\color{MidnightBlue},
+    mdframed={style=mdbluebox},
+    headpunct={\\[3pt]},
+    postheadspace={0pt}
+]{thmbluebox}
+
+\declaretheorem[%
+        style=thmbluebox,name=Definition,numberwithin=section]{ddefinition}
+\declaretheorem[%
+        style=thmbluebox,name=Proposition,numberwithin=section]{pproposition}
+\declaretheorem[%
+        style=thmbluebox,name=Theorem,numberwithin=section]{ttheorem}
+\declaretheorem[%
+        style=thmbluebox,name=Idea,numberwithin=section]{iidea}
+        
+% red
+
+\mdfdefinestyle{mdredbox}{%
+linewidth=0.5pt,
+skipabove=12pt,
+frametitleaboveskip=5pt,
+frametitlebelowskip=0pt,
+skipbelow=2pt,
+frametitlefont=\bfseries,
+innertopmargin=4pt,
+innerbottommargin=8pt,
+nobreak=false,
+backgroundcolor=Salmon!5,
+linecolor=RawSienna,
+}
+\declaretheoremstyle[
+    headfont=\bfseries\color{RawSienna},
+    mdframed={style=mdredbox},
+    headpunct={\\[3pt]},
+    postheadspace={0pt},
+  ]{thmredbox}
+
+\declaretheorem[%
+        style=thmredbox,name=Intuition,numberwithin=section]{iintuition}
+\declaretheorem[%
+	style=thmredbox,name=Technique,numberwithin=section]{ttechnique}
+
+% yellow
+
+\mdfdefinestyle{mdyellowbox}{%
+roundcorner=10pt,
+linewidth=1pt,
+skipabove=12pt,
+innerbottommargin=9pt,
+skipbelow=2pt,
+linecolor=BurntOrange,
+nobreak=false,
+backgroundcolor=Goldenrod!5,
+}
+\declaretheoremstyle[
+    headfont=\sffamily\bfseries\color{BrickRed},
+    mdframed={style=mdyellowbox},
+    headpunct={\\[3pt]},
+    postheadspace={0pt}
+]{thmyellowbox}
+
+
+\declaretheorem[%
+        style=thmyellowbox,name=Equation,numberwithin=section]{eequation}
+
+% green
+
+\mdfdefinestyle{mdgreenbox}{%
+    skipabove=8pt,
+    skipbelow=0pt,
+    linewidth=2pt,
+    rightline=false,
+    leftline=true,
+    topline=false,
+    bottomline=false,
+    linecolor=ForestGreen,
+    backgroundcolor=ForestGreen!5,
+}
+
+\declaretheoremstyle[
+    headfont=\bfseries\sffamily\color{ForestGreen!70!black},
+    bodyfont=\normalfont,
+    spaceabove=2pt,
+    spacebelow=1pt,
+    mdframed={style=mdgreenbox},
+    headpunct={ --- },
+]{thmgreenbox}
+
+\declaretheorem[%
+        style=thmgreenbox,name=Example,numberwithin=section]{eexample}
+\declaretheorem[%
+        style=thmgreenbox,name=Question,numberwithin=section]{qquestion}
+
+% black
+        
+\mdfdefinestyle{mdblackbox}{%
+    skipabove=8pt,
+    linewidth=3pt,
+    rightline=false,
+    leftline=true,
+    topline=false,
+    bottomline=false,
+    linecolor=black,
+    backgroundcolor=RedViolet!5!gray!5,
+}
+\declaretheoremstyle[
+    headfont=\bfseries,
+    bodyfont=\normalfont,
+    spaceabove=0pt,
+    spacebelow=0pt,
+    mdframed={style=mdblackbox}
+]{thmblackbox}
+
+% \declaretheorem[%
+%         style=thmblackbox,name=Note,numberwithin=section]{nnote}
+
+% purple
+
+\mdfdefinestyle{mdpurplebox}{%
+        skipabove=8pt,
+        skipbelow=0pt,
+        linewidth=2pt,
+        rightline=false,
+        leftline=true,
+        topline=false,
+        bottomline=false,
+        linecolor=Orchid,
+        backgroundcolor=Orchid!5,
+}
+\declaretheoremstyle[
+    headfont=\bfseries\sffamily\color{RoyalPurple!70!black},
+    bodyfont=\normalfont,
+    spaceabove=0pt,
+    spacebelow=0pt,
+    mdframed={style=mdpurplebox}
+  ]{thmpurplebox}
+
+\declaretheorem[%
+        style=thmpurplebox,name=Remark,numberwithin=section]{reemark}
+
+% pink
+
+\mdfdefinestyle{mdpinkbox}{%
+roundcorner=10pt,
+linewidth=1pt,
+skipabove=12pt,
+innerbottommargin=9pt,
+skipbelow=2pt,
+linecolor=RedViolet,
+nobreak=false,
+backgroundcolor=CarnationPink!5,
+}
+\declaretheoremstyle[
+    headfont=\sffamily\bfseries\color{Magenta},
+    mdframed={style=mdpinkbox},
+    headpunct={\\[3pt]},
+    postheadspace={0pt}
+]{thmpinkbox}
+
+\declaretheorem[%
+        style=thmpinkbox,name=Note,numberwithin=section]{nnote}
+
+
+% general math commands
+\newcommand{\lra}{\leftrightarrow}
+\newcommand{\mytilde}{{\,\raise.17ex\hbox{$\scriptstyle\mathtt{\sim}$}\,}}
+\newcommand{\myceil}[1]{\left \lceil #1 \right \rceil }
+\newcommand{\myfloor}[1]{\left \lfloor #1 \right \rfloor }
+\newcommand{\lie}[1]{\mathfrak{#1}} % Lie algebra
+\newcommand{\cev}[1]{\reflectbox{\ensuremath{\vec{\reflectbox{\ensuremath{#1}}}}}}  % backwards vector arrow
+\newcommand{\dual}{\ast} % dual of a differential form
+\renewcommand{\Re}{\operatorname{Re}}
+\renewcommand{\Im}{\operatorname{Im}}
+\newcommand{\Disc}{\operatorname{Disc}}
+\newcommand{\eval}{\Bigg|} % for evaluating integrals
+\newcommand{\one}{\mathbf{I}}
+\newcommand{\two}{\mathbf{II}}
+\newcommand{\three}{\mathbf{III}}
+\newcommand{\from}{\leftarrow}
+\newcommand{\dbar}{{d\mkern-7mu\mathchar'26\mkern-2mu}} % it's dbar!
+\newcommand{\mathspace}[0]{\hspace{1.5cm}} % horizontal spacing for stuff in math mode
+\newcommand{\reals}{\mathbb{R}} % reals
+\newcommand{\ints}{\mathbb{Z}} % integers
+\newcommand{\natty}{\mathbb{N}} % naturals
+\newcommand{\complex}{\mathbb{C}} % complex
+\newcommand{\eff}{\mathbb{F}} % Axler field for LADR
+\newcommand{\xto}[1]{\xrightarrow{#1}} % right arrow with stuff over it
+\newcommand{\unitv}[1]{\hat{\v{#1}}} % unit vector
+\newcommand{\twovec}[2]{\begin{pmatrix} #1 \\ #2 \end{pmatrix}}
+\newsavebox{\@brx} % double angle brackets
+\newcommand{\llangle}[1][]{\savebox{\@brx}{\(\m@th{#1\langle}\)} % left angle bracket
+  \mathopen{\copy\@brx\mkern2mu\kern-0.9\wd\@brx\usebox{\@brx}}}
+\newcommand{\rrangle}[1][]{\savebox{\@brx}{\(\m@th{#1\rangle}\) }% right angle bracket
+  \mathclose{\copy\@brx\mkern2mu\kern-0.9\wd\@brx\usebox{\@brx}}}
+\newcommand{\cat}[1]{\sffamily{#1}} % font for writing category names a la Paolo Aluffi
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}} % partial differentiation
+\newcommand{\rn}[0]{\reals^n} % r^n space
+\newcommand{\sint}[1][]{\sin{\theta_{(#1)}}} % sine of theta
+\newcommand{\cost}[1][]{\cos{\theta_{(#1)}}} % cosine of theta
+\newcommand{\bigo}[0]{\mathcal{O}} % Big-O
+\newcommand{\defeq}[0]{\mathrel{\overset{\makebox[0pt]{\mbox{\normalfont\tiny\sffamily def}}}{=}}} % def equals sign
+\newcommand{\bfx}[0]{\mathbf{x}} % vector x
+\newcommand{\bfr}[0]{\mathbf{r}} % vector r
+\newcommand{\bfe}[0]{\mathbf{e}} % vector e
+\newcommand{\fmap}[0]{\xmapsto{f}} % map symbol with f on top
+\newcommand{\elec}[0]{\mathbf{E}} % bold electric field
+\newcommand{\magn}[0]{\mathbf{B}} % bold magnetic field
+\newcommand{\ddt}[1]{\frac{d}{dt} \left( #1 \right)} % mostly used for the Euler Lagrange equations
+\newcommand{\textline}[0]{\noindent\rule{\textwidth}{1pt}} % line that goes across the page
+
+
+% improvements on existing commands
+\let\oldemptyset\emptyset           % save bad looking empty set
+\let\emptyset\varnothing            % good looking empty set
+\let\det\relax                      % determinant with correct exponent placement
+
+\DeclareMathOperator{\det}{det} 
+\newcommand{\grad}[0]{\nabla}       % no one calls it nabla anymore...
+
+\let\div\stupiddivisionsymbol       % dumbass division symbol that no one should use after
+                                    % the age of five; renaming to allow for the next command
+
+\newcommand{\div}[0]{\grad \cdot}   % div (for grown-ups!)
+\newcommand{\curl}[0]{\grad \times} % curl
+\newcommand{\noin}[0]{\noindent}    % no indent
+
+% algebra commands
+\newcommand{\union}{\cup}
+\newcommand{\intersect}{\cap}
+\newcommand{\subgr}{\subseteq}
+\newcommand{\subr}{\subseteq}
+\newcommand{\nsubgr}{\trianglelefteq} % normal subgroup
+\newcommand{\dunion}{\sqcup}
+\newcommand{\incl}{\iota}
+\renewcommand{\mod}{\, \mathrm{mod}\, } % modular arithmetic
+\newcommand{\sdprod}{\rtimes} % semidirect product
+
+% math operators
+\DeclareMathOperator{\gcf}{gcf}
+\DeclareMathOperator{\lcm}{lcm}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\im}{im}
+\DeclareMathOperator{\id}{id}
+\DeclareMathOperator{\ad}{ad}
+\DeclareMathOperator{\Ad}{Ad}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\adj}{adj}
+\DeclareMathOperator{\sech}{sech}
+\DeclareMathOperator{\sinc}{sinc}
+\DeclareMathOperator{\sign}{sign}
+\DeclareMathOperator{\Map}{Map}
+\DeclareMathOperator{\coker}{coker}
+\DeclareMathOperator{\Stab}{Stab}
+\DeclareMathOperator{\Aut}{Aut}
+\DeclareMathOperator{\End}{End}
+\DeclareMathOperator{\Hom}{Hom}
+\DeclareMathOperator{\Ai}{Ai}
+\DeclareMathOperator{\Bi}{Bi}
+\DeclareMathOperator{\Diff}{Diff}
+\DeclareMathOperator{\Pfaff}{Pfaff}
+\DeclareMathOperator{\Res}{Res}
+
+% QM and QFT commands
+\DeclarePairedDelimiter\ket{|}{\rangle} % use \ket* for large arguments
+\DeclarePairedDelimiter\bra{\langle}{|}
+\newcommand{\braket}[2]{\langle #1 | #2 \rangle}
+\newcommand{\bigbraket}[2]{\left\langle #1 \middle| #2 \right\rangle}
+
+\newcommand{\normord}[1]{\,\colon\!\mathrel{#1}\!\colon\,}
+\renewcommand{\bar}[1]{\overline{#1}}
+\renewcommand{\sl}[1]{\slashed{#1}} % Feynman slash
+\newcommand{\msbar}{\overline{\text{MS}}}
+\newcommand{\de}{\mathcal{D}} % path integral measure
+\newcommand{\op}{\mathcal{O}} % generic operator
+
+\newcommand{\parity}{\widehat{P}}
+\newcommand{\Time}{\widehat{T}} % capitalize to avoid conflict with clock packages
+\newcommand{\charge}{\widehat{C}}
+
+\newcommand{\enn}{\mathcal{N}} % number of supersymmetries
+
+\usepackage{xspace}
+\newcommand{\eV}{\text{e\kern-0.15ex V}\xspace} % better kerning for HEP units
+\newcommand{\keV}{\text{k\eV}\xspace}
+\newcommand{\MeV}{\text{M\eV}\xspace}
+\newcommand{\GeV}{\text{G\eV}\xspace}
+\newcommand{\TeV}{\text{T\kern-0.1ex \eV}\xspace}
+
+\newcommand{\meV}{\text{m\eV}\xspace}
+\newcommand{\mueV}{\mu\text{\eV}\xspace}
+\newcommand{\neV}{\text{n\eV}\xspace}
+\newcommand{\peV}{\text{p\eV}\xspace}
+
+% GR commands
+\newcommand{\cd}{\nabla} % covariant derivative
+\newcommand{\scri}{\mathcal{I}} % null infinity
+
+% probability commands
+\DeclareMathOperator{\expec}{\mathbb{E}}
+\DeclareMathOperator{\prob}{\mathbb{P}}
+\DeclareMathOperator{\indic}{\mathbbm{1}}
+\DeclareMathOperator{\var}{var}
+\DeclareMathOperator{\std}{std}
+\DeclareMathOperator{\lik}{lik}
+\DeclareMathOperator{\Pois}{Pois}
+\DeclareMathOperator{\betad}{beta}
+\DeclareMathOperator{\gammad}{gamma}
+\DeclareMathOperator{\erf}{erf}
+\newcommand*{\seteq}{\mathrel{\vcenter{\baselineskip0.5ex \lineskiplimit0pt
+                     \hbox{\scriptsize.}\hbox{\scriptsize.}}}=} % imperative assignment
+\DeclareMathOperator{\Bias}{Bias}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\cov}{cov}
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\argmin}{argmin}
+
+% theorem commands
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem*{claim}{Claim}
+\newtheorem*{example}{Example}
+\newtheorem{motivation}{Motivation}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Note}
+\newtheorem{proposition}{Proposition}
+\newtheorem*{proofsketch}{Proof Sketch}
+\renewenvironment{proof}{\noindent {\bfseries Proof.}\,}{\medskip}
+
+% hw stuff
+\newtheorem{hwproblem}{Problem}
+\newtheorem{hwsolution}{Solution}
+
+%environments
+\newenvironment{alphamerate}{\begin{enumerate}[(a)]}{\end{enumerate}}
+\newenvironment{chinese}{\begin{CJK*}{UTF8}{gbsn}}{\end{CJK*}}
+
+% EZ matrices:
+% Matrix commands; two letters after pmat/bmat = #rows #columns.
+% pmat = parentheses matrix, bmat = bracket matrix.
+% o = one, t = two, th = three. 4+ actually benefits from using
+% the normal matrix set-up.
+
+% three rows
+\newcommand{\pmattho}[3]{\begin{pmatrix} #1\\ #2\\ #3 \end{pmatrix}}
+
+\newcommand{\pmattht}[6]{\begin{pmatrix}
+#1 & #4\\
+#2 & #5\\
+#3 & #6
+\end{pmatrix}}
+
+\newcommand{\pmatthth}[9]{\begin{pmatrix}
+#1 & #4 & #7\\
+#2 & #5 & #8\\
+#3 & #6 & #9
+\end{pmatrix}}
+
+% two rows
+\newcommand{\pmatto}[2]{\begin{pmatrix} #1\\ #2\end{pmatrix}}
+\newcommand{\pmattt}[4]{\begin{pmatrix}
+#1 & #3\\
+#2 & #4\\
+\end{pmatrix}}
+\newcommand{\pmattth}[6]{\begin{pmatrix}
+#1 & #3 & #5\\
+#2 & #4 & #6
+\end{pmatrix}}
+
+% one row
+\newcommand{\pmatoo}[1]{\begin{pmatrix} #1 \end{pmatrix}}
+\newcommand{\pmatot}[2]{\begin{pmatrix}
+#1 & #2
+\end{pmatrix}}
+\newcommand{\pmatoth}[3]{\begin{pmatrix}
+#1 & #2 & #3
+\end{pmatrix}}
+
+
+% three rows
+\newcommand{\bmattho}[3]{\begin{bmatrix} #1\\ #2\\ #3 \end{bmatrix}}
+
+\newcommand{\bmattht}[6]{\begin{bmatrix}
+#1 & #4\\
+#2 & #5\\
+#3 & #6
+\end{bmatrix}}
+
+\newcommand{\bmatthth}[9]{\begin{bmatrix}
+#1 & #4 & #7\\
+#2 & #5 & #8\\
+#3 & #6 & #9
+\end{bmatrix}}
+
+% two rows
+\newcommand{\bmatto}[2]{\begin{bmatrix} #1\\ #2\end{bmatrix}}
+\newcommand{\bmattt}[4]{\begin{bmatrix}
+#1 & #3\\
+#2 & #4\\
+\end{bmatrix}}
+\newcommand{\bmattth}[6]{\begin{bmatrix}
+#1 & #3 & #5\\
+#2 & #4 & #6
+\end{bmatrix}}
+
+% one row
+\newcommand{\bmatoo}[1]{\begin{bmatrix} #1 \end{bmatrix}}
+\newcommand{\bmatot}[2]{\begin{bmatrix}
+#1 & #2
+\end{bmatrix}}
+\newcommand{\bmatoth}[3]{\begin{bmatrix}
+#1 & #2 & #3
+\end{bmatrix}}
+
+% you are entering the land of miscellanea
+
+% among us character in latex :3
+
+\newcommand{\amogus}[3][]{%
+\begin{tikzpicture}[every path/.style={very thick}]
+  % Backpack
+  \draw[fill=#2, rounded corners = 3mm] (1,1) rectangle ++(0.8,3.2);
+  % Body
+  \draw[fill=#2, rounded corners = 3mm] (1.5,0) -- (1.5,5)
+  arc (124.8074:103.8454:5) arc (80.6307:58.1808:5)-- (5,0) -- (3.7,0)
+  {[rounded corners = 0mm] -- (3.7,1) coordinate(A) -- (2.7,1)}
+  -- (2.7,0) -- cycle;
+  % Eyes
+  \ifthenelse{\equal{#1}{angry}}
+    {\draw[fill=#3]  plot[smooth cycle, tension=.7] coordinates
+      {(4.3,4.7) (5.2,4.6) (5.2,3.5) (4.2,3.2) (3.1,3.5) (3.1,4.7)};}
+    {\ifthenelse{\equal{#1}{very angry}}
+      {\draw[fill=#3]  plot[smooth cycle, tension=.7] coordinates
+        {(4.4,4.3) (5.2,4.6) (5.2,3.5) (4.2,3.6) (3.1,3.5) (3.1,4.7)};}
+      {\draw[fill=#3]  plot[smooth cycle, tension=.7] coordinates
+        {(4.3,4.9) (5.2,4.6) (5.2,3.5) (4.2,3.2) (3.1,3.5) (3.1,4.7)};}
+    }
+  % Leg detail
+  \draw plot[smooth, tension=.7] coordinates {(A) (3.9,1) (4.2,1.1)};
+\end{tikzpicture}
+}
+
+% how to use amog us
+
+% \amongus[emotion (optional)]{color of body}{color of visor}
+
+% https://tex.stackexchange.com/questions/567009/there-is-a-tikz-impostor-among-us ---------> credit for amog us
+
+% QED style images
+
+% \def\name_qed{
+% 	\begin{flushright}
+% 	{\mbox{$\resizebox{.16in}{.16in}{\includegraphics{image.png}}$}}
+%	\end{flushright}
+% }
+
+% Apple emojis in LaTeX. You need to load the folder
+% containing the files into your directory; I've
+% named mine "Emojis"
+
+\def\crying{\mbox{$\resizebox{.16in}{.16in}{\includegraphics{Emojis/Crying.jpeg}}$}}	 % crying emoji
+\def\cool{\mbox{$\resizebox{.16in}{.16in}{\includegraphics{Emojis/cool.jpeg}}$}}	 % cool emoji
+\def\nerd{\mbox{$\resizebox{.16in}{.16in}{\includegraphics{Emojis/nerd.jpeg}}$}}	 % nerd emoji
+\def\skull{\mbox{$\resizebox{.16in}{.16in}{\includegraphics{Emojis/Skull.jpeg}}$}}	 % skull emoji
+\def\thanks{\mbox{$\resizebox{.16in}{.16in}{\includegraphics{Emojis/praying.jpeg}}$}}	 % thanks emoji
+\def\eyes{\mbox{$\resizebox{.16in}{.16in}{\includegraphics{Emojis/eyes.jpeg}}$}}         % eyes emoji
+
+\def\gannon{\mbox{$\resizebox{.16in}{.16in}{\includegraphics{Figures/gannon-san.jpeg}}$}}	 % gannon emoji
