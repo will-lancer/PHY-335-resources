@@ -55,5 +55,12 @@ take the class.
  * **Embrace the fact that this is going to be a difficult class**. This class is
    just going to be hard. That's ok. Expect it, and don't be surprised when it's actually
    difficult.
+ * **Do the practice exams**. There are a few practice exams for this class. One
+   of them can be found [here](https://bpb-us-e1.wpmucdn.com/you.stonybrook.edu/dist/2/5507/files/2022/04/finalsA.pdf),
+   and a few more can be found [here](https://you.stonybrook.edu/phy335spring2019/).
+   There is another final in the SPS room, and the Fall 2024 final is in this
+   repo. Note: don't be super open with things like this, or else they'll get taken down
+   for everyone. 
+
 
 Good luck.
